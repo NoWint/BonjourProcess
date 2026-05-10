@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bonjour — Cinematic Experience</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════════
+   BONJOUR CINEMATIC PROMO — DIRECTOR'S CUT
+   ═══════════════════════════════════════════════════════════════════════════════
+   Visual Thesis:
+   "A descent into a dark, weightless void. Glass surfaces emerge from
+   blackness, lit by a single living green. Each scene is a held breath."
+
+   Interaction Thesis:
+   1. Spacebar advances the narrative — each press is a cut to the next scene
+   2. Every scene has a choreographed entrance, a held moment, and an exit
+   3. The cursor leaves a trail of light; ambient orbs respond to presence
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root{
+  --void:#000000;
+  --bone:#ffffff;
+  --ghost:rgba(255,255,255,0.45);
+  --ghost-dim:rgba(255,255,255,0.2);
+  --life:#4ade80;
+  --life-bright:#86efac;
+  --life-dim:rgba(74,222,128,0.1);
+  --life-mid:rgba(74,222,128,0.25);
+  --life-glow:rgba(74,222,128,0.4);
+  --border:rgba(255,255,255,0.05);
+  --ease-out-expo:cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart:cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring:cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-dramatic:cubic-bezier(0.87, 0, 0.13, 1);
+}
+
+html, body {
+  font-family:'Inter', -apple-system, sans-serif;
+  background:var(--void); color:var(--bone);
+  width:100vw; height:100vh; overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   FILM OVERLAY SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Film grain — 35mm texture */
+.grain {
+  position:fixed; inset:0; pointer-events:none; z-index:9998;
+  opacity:0.04;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grainShift 0.35s steps(6) infinite;
+}
+@keyframes grainShift {
+  0%,100%{transform:translate(0,0) scale(1.1)}
+  20%{transform:translate(-2%,-1.5%) scale(1.1)}
+  40%{transform:translate(1.5%,2%) scale(1.1)}
+  60%{transform:translate(-1%,1%) scale(1.1)}
+  80%{transform:translate(2%,-2%) scale(1.1)}
+}
+
+/* Vignette — lens falloff */
+.vignette {
+  position:fixed; inset:0; pointer-events:none; z-index:9997;
+  background:radial-gradient(ellipse 75% 60% at 50% 45%, transparent 40%, rgba(0,0,0,0.5) 100%);
+}
+
+/* Scanlines — subtle CRT memory */
+.scanlines {
+  position:fixed; inset:0; pointer-events:none; z-index:9996;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+}
+
+/* Cursor light trail */
+.cursor-trail {
+  position:fixed; width:400px; height:400px; border-radius:50%;
+  background:radial-gradient(circle, rgba(74,222,128,0.07), transparent 65%);
+  pointer-events:none; z-index:1;
+  transform:translate(-50%,-50%);
+  transition:opacity 0.5s ease;
+  opacity:0;
+}
+body:hover .cursor-trail { opacity:1; }
+
+/* Scene indicator dots */
+.scene-dots {
+  position:fixed; right:30px; top:50%; transform:translateY(-50%);
+  display:flex; flex-direction:column; gap:12px; z-index:100;
+}
+.scene-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:rgba(255,255,255,0.15);
+  transition:all 0.6s var(--ease-out-expo);
+  cursor:pointer;
+}
+.scene-dot.active {
+  background:var(--life);
+  box-shadow:0 0 12px var(--life-glow);
+  transform:scale(1.5);
+}
+.scene-dot:hover { background:rgba(255,255,255,0.4); }
+
+/* Scene counter */
+.scene-counter {
+  position:fixed; bottom:30px; left:30px; z-index:100;
+  font-family:'Space Grotesk', monospace;
+  font-size:11px; letter-spacing:0.2em; color:var(--ghost-dim);
+  transition:all 0.5s ease;
+}
+.scene-counter .current { color:var(--life); }
+.scene-counter .sep { margin:0 6px; }
+
+/* Space hint */
+.space-hint {
+  position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+  z-index:100; display:flex; align-items:center; gap:10px;
+  font-size:10px; letter-spacing:0.25em; text-transform:uppercase;
+  color:var(--ghost-dim); opacity:0;
+  transition:opacity 1s ease;
+}
+.space-hint.visible { opacity:1; }
+.space-hint kbd {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:28px; height:28px; border-radius:6px;
+  border:1px solid rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.04);
+  font-family:inherit; font-size:10px; color:var(--ghost);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE SYSTEM — Full viewport, absolute positioned
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.scene-container {
+  position:fixed; inset:0; overflow:hidden;
+}
+
+.scene {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:none;
+}
+
+.scene.active {
+  opacity:1; pointer-events:auto;
+}
+
+/* Scene transition states */
+.scene.entering { animation:sceneEnter 1.2s var(--ease-out-expo) forwards; }
+.scene.exiting { animation:sceneExit 0.8s var(--ease-dramatic) forwards; }
+
+@keyframes sceneEnter {
+  from { opacity:0; }
+  to { opacity:1; }
+}
+@keyframes sceneExit {
+  from { opacity:1; }
+  to { opacity:0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ANIMATION KEYFRAMES LIBRARY
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(60px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes fadeUpLarge {
+  from { opacity:0; transform:translateY(100px) scale(0.95); }
+  to { opacity:1; transform:translateY(0) scale(1); }
+}
+@keyframes fadeDown {
+  from { opacity:0; transform:translateY(-50px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity:0; }
+  to { opacity:1; }
+}
+@keyframes scaleIn {
+  from { opacity:0; transform:scale(0.85); }
+  to { opacity:1; transform:scale(1); }
+}
+@keyframes scaleInLarge {
+  from { opacity:0; transform:scale(0.7) translateY(40px); }
+  to { opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes slideFromLeft {
+  from { opacity:0; transform:translateX(-120px); }
+  to { opacity:1; transform:translateX(0); }
+}
+@keyframes slideFromRight {
+  from { opacity:0; transform:translateX(120px); }
+  to { opacity:1; transform:translateX(0); }
+}
+@keyframes slideFromTop {
+  from { opacity:0; transform:translateY(-80px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes slideFromBottom {
+  from { opacity:0; transform:translateY(80px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes clipReveal {
+  from { clip-path:inset(100% 0 0 0); opacity:0; }
+  to { clip-path:inset(0 0 0 0); opacity:1; }
+}
+@keyframes clipRevealHorizontal {
+  from { clip-path:inset(0 100% 0 0); opacity:0; }
+  to { clip-path:inset(0 0 0 0); opacity:1; }
+}
+@keyframes blurIn {
+  from { opacity:0; filter:blur(20px); transform:scale(1.05); }
+  to { opacity:1; filter:blur(0); transform:scale(1); }
+}
+@keyframes letterSpacingExpand {
+  from { opacity:0; letter-spacing:0.5em; }
+  to { opacity:1; letter-spacing:0.3em; }
+}
+@keyframes lineGrow {
+  from { transform:scaleX(0); }
+  to { transform:scaleX(1); }
+}
+@keyframes lineGrowVertical {
+  from { transform:scaleY(0); }
+  to { transform:scaleY(1); }
+}
+@keyframes float {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(-20px); }
+}
+@keyframes floatSlow {
+  0%,100% { transform:translateY(0) rotate(0deg); }
+  50% { transform:translateY(-30px) rotate(2deg); }
+}
+@keyframes breathe {
+  0%,100% { opacity:0.3; }
+  50% { opacity:0.7; }
+}
+@keyframes pulse {
+  0%,100% { transform:scale(1); opacity:1; }
+  50% { transform:scale(1.05); opacity:0.8; }
+}
+@keyframes glowPulse {
+  0%,100% { box-shadow:0 0 20px rgba(74,222,128,0.15); }
+  50% { box-shadow:0 0 60px rgba(74,222,128,0.4), 0 0 120px rgba(74,222,128,0.1); }
+}
+@keyframes shimmer {
+  0% { background-position:-200% center; }
+  100% { background-position:200% center; }
+}
+@keyframes rotateSlow {
+  from { transform:rotate(0deg); }
+  to { transform:rotate(360deg); }
+}
+@keyframes typewriter {
+  from { width:0; }
+  to { width:100%; }
+}
+@keyframes blink {
+  0%,100% { opacity:1; }
+  50% { opacity:0; }
+}
+@keyframes orbit {
+  from { transform:rotate(0deg) translateX(150px) rotate(0deg); }
+  to { transform:rotate(360deg) translateX(150px) rotate(-360deg); }
+}
+@keyframes drift {
+  0%,100% { transform:translate(0,0); }
+  25% { transform:translate(10px,-15px); }
+  50% { transform:translate(-5px,10px); }
+  75% { transform:translate(15px,5px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   AMBIENT ELEMENTS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.orb {
+  position:absolute; border-radius:50%; filter:blur(100px); pointer-events:none;
+}
+.orb-1 { width:500px; height:500px; background:rgba(74,222,128,0.12); top:-10%; left:-10%; animation:floatSlow 12s ease-in-out infinite; }
+.orb-2 { width:400px; height:400px; background:rgba(34,197,94,0.08); bottom:-5%; right:-8%; animation:floatSlow 15s ease-in-out infinite 3s; }
+.orb-3 { width:300px; height:300px; background:rgba(74,222,128,0.06); top:40%; right:15%; animation:float 8s ease-in-out infinite 1.5s; }
+.orb-4 { width:250px; height:250px; background:rgba(74,222,128,0.1); bottom:20%; left:10%; animation:drift 20s ease-in-out infinite; }
+
+/* Decorative lines */
+.deco-line {
+  position:absolute; background:linear-gradient(90deg, transparent, var(--life), transparent);
+  height:1px; opacity:0.3;
+}
+.deco-line-v {
+  position:absolute; background:linear-gradient(180deg, transparent, var(--life), transparent);
+  width:1px; opacity:0.2;
+}
+
+/* Grid overlay */
+.grid-overlay {
+  position:absolute; inset:0; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size:80px 80px;
+  mask-image:radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%);
+  -webkit-mask-image:radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE 1: OPENING — "The Void"
+   A single word emerges from darkness.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.s1 {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(74,222,128,0.06), transparent 70%),
+    radial-gradient(ellipse 40% 35% at 30% 30%, rgba(34,197,94,0.03), transparent);
+}
+.s1-content {
+  text-align:center; position:relative; z-index:10;
+}
+.s1-tag {
+  font-family:'Space Grotesk', sans-serif;
+  font-size:11px; letter-spacing:0.5em; text-transform:uppercase;
+  color:var(--life); margin-bottom:3rem;
+  animation:letterSpacingExpand 1.5s var(--ease-out-expo) 0.5s both;
+}
+.s1-title {
+  font-size:clamp(5rem, 16vw, 14rem); font-weight:900;
+  line-height:0.88; letter-spacing:-0.06em;
+  animation:fadeUpLarge 1.8s var(--ease-out-expo) 0.8s both;
+}
+.s1-title .grad {
+  background:linear-gradient(165deg, #fff 15%, var(--life) 85%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.s1-sub {
+  font-size:clamp(0.9rem, 1.6vw, 1.15rem); font-weight:300;
+  color:var(--ghost); max-width:420px; margin:2.5rem auto 0;
+  line-height:1.7; letter-spacing:0.02em;
+  animation:fadeUp 1.4s var(--ease-out-expo) 1.4s both;
+}
+.s1-line {
+  width:40px; height:1px; background:var(--life); margin:3rem auto 0;
+  animation:lineGrow 1s var(--ease-out-expo) 2s both; transform-origin:center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE 2: DASHBOARD — "Control"
+   Text slides from left, image from right. They meet in the middle.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.s2 {
+  background:linear-gradient(135deg, var(--void) 0%, #020602 50%, var(--void) 100%);
+}
+.s2-layout {
+  display:grid; grid-template-columns:1fr 1.4fr; gap:6rem;
+  align-items:center; max-width:1300px; padding:4rem; width:100%;
+}
+.s2-text { position:relative; }
+.s2-text .eyebrow {
+  font-family:'Space Grotesk', sans-serif; font-size:10px;
+  letter-spacing:0.4em; text-transform:uppercase; color:var(--life);
+  margin-bottom:2rem; display:flex; align-items:center; gap:12px;
+}
+.s2-text .eyebrow::before {
+  content:''; display:block; width:24px; height:1px; background:var(--life); opacity:0.5;
+}
+.s2-text h2 {
+  font-size:clamp(2.5rem, 5vw, 4.2rem); font-weight:800;
+  line-height:1.05; letter-spacing:-0.035em; margin-bottom:1.8rem;
+}
+.s2-text p {
+  font-size:1.05rem; color:var(--ghost); line-height:1.85;
+  font-weight:300; max-width:400px;
+}
+.s2-text .deco {
+  margin-top:3rem; display:flex; gap:0.8rem; flex-wrap:wrap;
+}
+.s2-text .deco span {
+  padding:0.5rem 1.1rem; border:1px solid var(--border);
+  border-radius:100px; font-size:11px; color:var(--ghost);
+  background:rgba(255,255,255,0.02); letter-spacing:0.05em;
+  transition:all 0.4s ease;
+}
+.s2-text .deco span:hover {
+  border-color:rgba(74,222,128,0.3); color:var(--life); background:var(--life-dim);
+}
+.s2-img {
+  position:relative; perspective:1500px;
+}
+.s2-img img {
+  width:100%; border-radius:16px;
+  box-shadow:0 60px 140px rgba(0,0,0,0.9), 0 0 80px rgba(74,222,128,0.06);
+  transition:transform 1s var(--ease-out-expo);
+  transform-style:preserve-3d;
+}
+.s2-img::before {
+  content:''; position:absolute; inset:-2px; border-radius:18px;
+  background:linear-gradient(135deg, rgba(74,222,128,0.15), transparent 50%, rgba(74,222,128,0.05));
+  z-index:-1; opacity:0; transition:opacity 0.8s ease;
+}
+.s2-img:hover::before { opacity:1; }
+.s2-img:hover img { transform:rotateY(-5deg) rotateX(3deg) scale(1.03); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE 3: ZEN MODE — "Immersion"
+   Full-bleed image. Title above, caption below. The image breathes.
+   FIXED: constrain image to viewport with max-height
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.s3 {
+  flex-direction:column; background:var(--void);
+  padding:2rem;
+}
+.s3-header {
+  text-align:center; margin-bottom:1.5rem; position:relative; z-index:10;
+  flex-shrink:0;
+}
+.s3-header .eyebrow {
+  font-family:'Space Grotesk', sans-serif; font-size:10px;
+  letter-spacing:0.4em; text-transform:uppercase; color:var(--life);
+  margin-bottom:0.8rem;
+}
+.s3-header h2 {
+  font-size:clamp(2rem, 5vw, 4rem); font-weight:800;
+  letter-spacing:-0.035em;
+}
+.s3-img-wrap {
+  position:relative;
+  max-width:900px;
+  width:100%;
+  max-height:calc(100vh - 200px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.s3-img-wrap img {
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  border-radius:16px;
+  box-shadow:0 40px 100px rgba(0,0,0,0.95), 0 0 80px rgba(74,222,128,0.05);
+  transition:transform 8s ease;
+}
+.s3-img-wrap:hover img { transform:scale(1.02); }
+.s3-caption {
+  position:absolute; bottom:-40px; left:50%; transform:translateX(-50%);
+  font-size:12px; color:var(--ghost); white-space:nowrap;
+  letter-spacing:0.1em; text-transform:uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE 4: GAMELIST — "Collection"
+   Reversed layout. Image leads, text follows.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.s4 {
+  background:radial-gradient(ellipse 50% 45% at 20% 50%, rgba(74,222,128,0.04), transparent);
+}
+.s4-layout {
+  display:grid; grid-template-columns:1.4fr 1fr; gap:6rem;
+  align-items:center; max-width:1300px; padding:4rem; width:100%;
+}
+.s4-layout .s2-img { order:-1; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE 5: MODS — "Possibility"
+   Centered composition. The image is the hero.
+   FIXED: constrain image to viewport with max-height
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.s5 {
+  flex-direction:column; background:linear-gradient(180deg, var(--void) 0%, #050a05 100%);
+  padding:2rem;
+}
+.s5-header {
+  text-align:center; margin-bottom:1.5rem; flex-shrink:0;
+}
+.s5-header .eyebrow {
+  font-family:'Space Grotesk', sans-serif; font-size:10px;
+  letter-spacing:0.4em; text-transform:uppercase; color:var(--life);
+  margin-bottom:0.8rem;
+}
+.s5-header h2 {
+  font-size:clamp(2rem, 5vw, 4rem); font-weight:800;
+  letter-spacing:-0.035em; margin-bottom:0.5rem;
+}
+.s5-header p {
+  font-size:1rem; color:var(--ghost); font-weight:300; max-width:500px; margin:0 auto;
+}
+.s5-img {
+  max-width:900px;
+  width:100%;
+  max-height:calc(100vh - 220px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+.s5-img img {
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  border-radius:16px;
+  box-shadow:0 40px 100px rgba(0,0,0,0.95);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE 6: TRANSFORM — "Metamorphosis"
+   The video scene. A moment of transformation.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.s6 {
+  flex-direction:column; background:var(--void);
+  padding:2rem;
+}
+.s6-header {
+  text-align:center; margin-bottom:1.5rem; flex-shrink:0;
+}
+.s6-header .eyebrow {
+  font-family:'Space Grotesk', sans-serif; font-size:10px;
+  letter-spacing:0.4em; text-transform:uppercase; color:var(--life);
+  margin-bottom:0.8rem;
+}
+.s6-header h2 {
+  font-size:clamp(2rem, 5vw, 4rem); font-weight:800;
+  letter-spacing:-0.035em;
+}
+.s6-video-wrap {
+  position:relative;
+  max-width:900px;
+  width:100%;
+  max-height:calc(100vh - 200px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.s6-video-wrap video {
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  border-radius:16px;
+  box-shadow:0 40px 100px rgba(0,0,0,0.95), 0 0 60px rgba(74,222,128,0.08);
+}
+.s6-caption {
+  position:absolute; bottom:-40px; left:50%; transform:translateX(-50%);
+  font-size:12px; color:var(--ghost); white-space:nowrap;
+  letter-spacing:0.1em; text-transform:uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE 7: CRAFT — "Philosophy"
+   No image. Just words floating in space.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.s7 {
+  flex-direction:column; text-align:center;
+  background:radial-gradient(ellipse 60% 50% at 50% 50%, rgba(74,222,128,0.05), transparent);
+}
+.s7-quote {
+  font-size:clamp(1.8rem, 4vw, 3.2rem); font-weight:300;
+  line-height:1.4; letter-spacing:-0.02em; max-width:700px;
+  font-style:italic; color:var(--bone);
+}
+.s7-quote .highlight {
+  color:var(--life); font-weight:500; font-style:normal;
+}
+.s7-attrib {
+  margin-top:3rem; font-size:11px; letter-spacing:0.3em;
+  text-transform:uppercase; color:var(--ghost-dim);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE 8: CLOSING — "The Beginning"
+   Final call to action. Everything glows.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.s8 {
+  flex-direction:column; text-align:center;
+  background:radial-gradient(ellipse 70% 50% at 50% 55%, rgba(74,222,128,0.12), transparent 55%);
+}
+.s8 h2 {
+  font-size:clamp(4rem, 10vw, 9rem); font-weight:900;
+  line-height:0.92; letter-spacing:-0.045em; margin-bottom:1.5rem;
+}
+.s8 h2 .grad {
+  background:linear-gradient(150deg, #fff 20%, var(--life) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.s8 p {
+  font-size:1.15rem; color:var(--ghost); font-weight:300;
+  margin-bottom:3.5rem; letter-spacing:0.01em;
+}
+.s8-actions {
+  display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:3rem;
+}
+.s8-btn {
+  display:flex; align-items:center; gap:0.7rem; padding:1.1rem 2.4rem;
+  border-radius:14px; font-size:15px; font-weight:600; text-decoration:none;
+  transition:all 0.5s var(--ease-out-expo); cursor:pointer; border:none;
+  position:relative; overflow:hidden;
+}
+.s8-btn::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform:translateX(-100%); transition:transform 0.6s ease;
+}
+.s8-btn:hover::before { transform:translateX(100%); }
+.s8-btn-main {
+  background:var(--life); color:#000;
+  animation:glowPulse 3s ease-in-out infinite;
+}
+.s8-btn-main:hover {
+  transform:scale(1.06) translateY(-3px);
+  box-shadow:0 0 120px rgba(74,222,128,0.35);
+}
+.s8-btn-sec {
+  background:rgba(255,255,255,0.03); color:var(--bone);
+  border:1px solid var(--border); backdrop-filter:blur(20px);
+}
+.s8-btn-sec:hover {
+  background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.12);
+  transform:scale(1.06) translateY(-3px);
+}
+
+/* Contact */
+.s8-contact {
+  margin-top:2rem; padding:1.2rem 2rem;
+  background:rgba(255,255,255,0.02); border:1px solid var(--border);
+  border-radius:14px; backdrop-filter:blur(20px);
+  display:flex; align-items:center; gap:1rem;
+}
+.s8-contact .qq-icon {
+  width:36px; height:36px; border-radius:10px;
+  background:var(--life-dim); display:flex; align-items:center; justify-content:center;
+  font-family:'Space Grotesk', sans-serif; font-size:14px; color:var(--life); font-weight:700;
+}
+.s8-contact .qq-info { text-align:left; }
+.s8-contact .qq-info .label {
+  font-size:10px; color:var(--ghost-dim); letter-spacing:0.15em; text-transform:uppercase;
+}
+.s8-contact .qq-info .num {
+  font-family:'Space Grotesk', sans-serif; font-size:17px; font-weight:700;
+  color:var(--bone); letter-spacing:0.02em;
+}
+.s8-footer {
+  margin-top:4rem; font-size:11px; color:rgba(255,255,255,0.15); letter-spacing:0.1em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE 9: DEV PROGRESS — "The Forge"
+   Development progress dashboard with live data visualization.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.s9 {
+  flex-direction:column;
+  background:radial-gradient(ellipse 60% 50% at 50% 50%, rgba(74,222,128,0.04), transparent 60%);
+  padding:2rem;
+  overflow-y:auto;
+}
+.s9-header {
+  text-align:center; margin-bottom:2rem; flex-shrink:0;
+}
+.s9-header .eyebrow {
+  font-family:'Space Grotesk', sans-serif; font-size:10px;
+  letter-spacing:0.4em; text-transform:uppercase; color:var(--life);
+  margin-bottom:0.8rem;
+}
+.s9-header h2 {
+  font-size:clamp(2rem, 5vw, 3.5rem); font-weight:800;
+  letter-spacing:-0.035em; margin-bottom:0.5rem;
+}
+.s9-header p {
+  font-size:0.95rem; color:var(--ghost); font-weight:300; max-width:500px; margin:0 auto;
+}
+
+/* Progress dashboard layout */
+.s9-dashboard {
+  width:100%;
+  max-width:1200px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1.5rem;
+  padding:0 1rem;
+}
+
+@media (max-width: 950px) {
+  .s9-dashboard {
+    grid-template-columns:1fr;
+  }
+}
+
+/* Glass card component */
+.glass-card {
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:1.5rem;
+  backdrop-filter:blur(20px);
+  transition:all 0.4s var(--ease-out-expo);
+}
+.glass-card:hover {
+  border-color:rgba(74,222,128,0.15);
+  background:rgba(255,255,255,0.03);
+}
+.glass-card .card-title {
+  font-family:'Space Grotesk', sans-serif;
+  font-size:11px; letter-spacing:0.3em; text-transform:uppercase;
+  color:var(--life); margin-bottom:1.2rem;
+  display:flex; align-items:center; gap:10px;
+}
+.glass-card .card-title::before {
+  content:''; display:block; width:20px; height:1px; background:var(--life); opacity:0.5;
+}
+
+/* Progress bar */
+.progress-item {
+  margin-bottom:1rem;
+}
+.progress-item:last-child {
+  margin-bottom:0;
+}
+.progress-label {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:0.4rem;
+}
+.progress-label .name {
+  font-size:13px; color:var(--bone); font-weight:500;
+}
+.progress-label .pct {
+  font-family:'Space Grotesk', monospace;
+  font-size:12px; color:var(--life); font-weight:600;
+}
+.progress-track {
+  height:4px; background:rgba(255,255,255,0.04); border-radius:2px; overflow:hidden;
+}
+.progress-fill {
+  height:100%; background:linear-gradient(90deg, var(--life), var(--life-bright));
+  border-radius:2px;
+  width:0%;
+  transition:width 1.2s var(--ease-out-expo);
+  position:relative;
+}
+.progress-fill::after {
+  content:''; position:absolute; right:0; top:0; bottom:0; width:20px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+}
+
+/* Stats grid */
+.stats-grid {
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem;
+}
+.stat-item {
+  text-align:center; padding:1rem 0.5rem;
+  background:rgba(255,255,255,0.015); border-radius:12px;
+  border:1px solid rgba(255,255,255,0.03);
+  transition:all 0.3s ease;
+}
+.stat-item:hover {
+  background:rgba(255,255,255,0.03);
+  border-color:rgba(74,222,128,0.1);
+}
+.stat-value {
+  font-family:'Space Grotesk', sans-serif;
+  font-size:1.6rem; font-weight:700; color:var(--life);
+  line-height:1;
+  margin-bottom:0.4rem;
+}
+.stat-label {
+  font-size:10px; color:var(--ghost-dim); letter-spacing:0.15em; text-transform:uppercase;
+}
+
+/* Changelog timeline */
+.changelog-list {
+  display:flex; flex-direction:column; gap:0.8rem;
+}
+.changelog-entry {
+  display:flex; gap:1rem; align-items:flex-start;
+  padding:0.8rem;
+  border-radius:10px;
+  background:rgba(255,255,255,0.01);
+  border:1px solid rgba(255,255,255,0.03);
+  transition:all 0.3s ease;
+}
+.changelog-entry:hover {
+  background:rgba(255,255,255,0.025);
+  border-color:rgba(74,222,128,0.1);
+}
+.changelog-dot {
+  width:8px; height:8px; border-radius:50%; background:var(--life);
+  margin-top:6px; flex-shrink:0;
+  box-shadow:0 0 8px rgba(74,222,128,0.3);
+}
+.changelog-dot.major { background:#fbbf24; box-shadow:0 0 8px rgba(251,191,36,0.3); }
+.changelog-dot.fix { background:#f87171; box-shadow:0 0 8px rgba(248,113,113,0.3); }
+.changelog-content { flex:1; }
+.changelog-version {
+  font-family:'Space Grotesk', sans-serif;
+  font-size:12px; font-weight:600; color:var(--bone); margin-bottom:0.2rem;
+}
+.changelog-date {
+  font-size:10px; color:var(--ghost-dim); letter-spacing:0.1em;
+  margin-bottom:0.3rem;
+}
+.changelog-desc {
+  font-size:12px; color:var(--ghost); line-height:1.6;
+}
+.changelog-desc .tag {
+  display:inline-block; padding:1px 6px; border-radius:4px;
+  font-size:10px; font-weight:600; margin-right:4px;
+}
+.tag-new { background:rgba(74,222,128,0.12); color:var(--life); }
+.tag-fix { background:rgba(248,113,113,0.12); color:#f87171; }
+.tag-opt { background:rgba(96,165,250,0.12); color:#60a5fa; }
+
+/* Module status list */
+.module-list {
+  display:flex; flex-direction:column; gap:0.5rem;
+}
+.module-item {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0.6rem 0.8rem; border-radius:8px;
+  background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.03);
+  transition:all 0.3s ease;
+}
+.module-item:hover {
+  background:rgba(255,255,255,0.025);
+}
+.module-name {
+  font-size:13px; color:var(--bone); font-weight:500;
+  display:flex; align-items:center; gap:8px;
+}
+.module-status {
+  font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+  padding:2px 8px; border-radius:100px;
+}
+.status-done { background:rgba(74,222,128,0.1); color:var(--life); }
+.status-wip { background:rgba(251,191,36,0.1); color:#fbbf24; }
+.status-plan { background:rgba(255,255,255,0.05); color:var(--ghost-dim); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SCENE ANIMATION CLASSES — Applied via JS when scene becomes active
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Scene 1 animations */
+.s1.active .s1-tag { animation:letterSpacingExpand 1.5s var(--ease-out-expo) 0.3s both; }
+.s1.active .s1-title { animation:fadeUpLarge 1.8s var(--ease-out-expo) 0.6s both; }
+.s1.active .s1-sub { animation:fadeUp 1.4s var(--ease-out-expo) 1.2s both; }
+.s1.active .s1-line { animation:lineGrow 1s var(--ease-out-expo) 1.8s both; }
+
+/* Scene 2 animations */
+.s2.active .s2-text .eyebrow { animation:slideFromLeft 1s var(--ease-out-expo) 0.2s both; }
+.s2.active .s2-text h2 { animation:slideFromLeft 1.2s var(--ease-out-expo) 0.4s both; }
+.s2.active .s2-text p { animation:slideFromLeft 1.2s var(--ease-out-expo) 0.6s both; }
+.s2.active .s2-text .deco { animation:fadeUp 1s var(--ease-out-expo) 0.9s both; }
+.s2.active .s2-img { animation:slideFromRight 1.4s var(--ease-out-expo) 0.3s both; }
+
+/* Scene 3 animations */
+.s3.active .s3-header { animation:fadeDown 1s var(--ease-out-expo) 0.2s both; }
+.s3.active .s3-img-wrap { animation:scaleInLarge 1.6s var(--ease-out-expo) 0.4s both; }
+.s3.active .s3-caption { animation:fadeIn 1s ease 1.4s both; }
+
+/* Scene 4 animations */
+.s4.active .s2-img { animation:slideFromLeft 1.4s var(--ease-out-expo) 0.2s both; }
+.s4.active .s2-text .eyebrow { animation:slideFromRight 1s var(--ease-out-expo) 0.3s both; }
+.s4.active .s2-text h2 { animation:slideFromRight 1.2s var(--ease-out-expo) 0.5s both; }
+.s4.active .s2-text p { animation:slideFromRight 1.2s var(--ease-out-expo) 0.7s both; }
+.s4.active .s2-text .deco { animation:fadeUp 1s var(--ease-out-expo) 1s both; }
+
+/* Scene 5 animations */
+.s5.active .s5-header { animation:fadeUp 1s var(--ease-out-expo) 0.2s both; }
+.s5.active .s5-img { animation:scaleInLarge 1.6s var(--ease-out-expo) 0.5s both; }
+
+/* Scene 6 (video) animations */
+.s6.active .s6-header { animation:fadeDown 1s var(--ease-out-expo) 0.2s both; }
+.s6.active .s6-video-wrap { animation:scaleInLarge 1.6s var(--ease-out-expo) 0.4s both; }
+.s6.active .s6-caption { animation:fadeIn 1s ease 1.4s both; }
+
+/* Scene 7 (philosophy) animations */
+.s7.active .s7-quote { animation:fadeUp 1.5s var(--ease-out-expo) 0.4s both; }
+.s7.active .s7-attrib { animation:fadeIn 1s ease 1.2s both; }
+
+/* Scene 8 (closing) animations */
+.s8.active h2 { animation:fadeUpLarge 1.5s var(--ease-out-expo) 0.2s both; }
+.s8.active p { animation:fadeUp 1.2s var(--ease-out-expo) 0.5s both; }
+.s8.active .s8-actions { animation:fadeUp 1s var(--ease-out-expo) 0.8s both; }
+.s8.active .s8-contact { animation:fadeUp 1s var(--ease-out-expo) 1.1s both; }
+.s8.active .s8-footer { animation:fadeIn 1.5s ease 1.5s both; }
+
+/* Scene 9 (dev progress) animations */
+.s9.active .s9-header { animation:fadeDown 1s var(--ease-out-expo) 0.2s both; }
+.s9.active .glass-card { animation:fadeUp 1s var(--ease-out-expo) both; }
+.s9.active .glass-card:nth-child(1) { animation-delay:0.4s; }
+.s9.active .glass-card:nth-child(2) { animation-delay:0.55s; }
+.s9.active .glass-card:nth-child(3) { animation-delay:0.7s; }
+.s9.active .glass-card:nth-child(4) { animation-delay:0.85s; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════════ */
+@media(max-width:950px) {
+  .s2-layout, .s4-layout { grid-template-columns:1fr !important; gap:3rem; padding:3rem 1.5rem; }
+  .s4-layout .s2-img { order:0 !important; }
+  .s2-text { text-align:center; }
+  .s2-text .eyebrow { justify-content:center; }
+  .s2-text p { margin:0 auto; }
+  .s2-text .deco { justify-content:center; }
+  .s2-img:hover img { transform:none; }
+  .s8-contact { flex-direction:column; text-align:center; }
+  .s8-contact .qq-info { text-align:center; }
+  .scene-dots { display:none; }
+  .s9-dashboard { grid-template-columns:1fr !important; }
+  .stats-grid { grid-template-columns:repeat(2, 1fr) !important; }
+}
+@media(max-width:600px) {
+  .s8-actions { flex-direction:column; align-items:center; }
+  .s8-btn { width:100%; max-width:280px; justify-content:center; }
+  .s1-title { font-size:clamp(3.5rem, 14vw, 6rem); }
+  .stats-grid { grid-template-columns:1fr !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TRANSITION OVERLAY — Flash effect between scenes
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.flash-overlay {
+  position:fixed; inset:0; background:var(--life); z-index:9995;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.15s ease;
+}
+.flash-overlay.active { opacity:0.08; }
+
+/* Noise burst during transition */
+.noise-burst {
+  position:fixed; inset:0; z-index:9994; pointer-events:none;
+  opacity:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  transition:opacity 0.1s ease;
+}
+.noise-burst.active { opacity:0.15; }
+</style>
+</head>
+<body>
+
+<!-- Film overlays -->
+<div class="grain"></div>
+<div class="vignette"></div>
+<div class="scanlines"></div>
+<div class="flash-overlay" id="flashOverlay"></div>
+<div class="noise-burst" id="noiseBurst"></div>
+
+<!-- Cursor trail -->
+<div class="cursor-trail" id="cursorTrail"></div>
+
+<!-- Scene navigation -->
+<div class="scene-dots" id="sceneDots"></div>
+<div class="scene-counter" id="sceneCounter">
+  <span class="current" id="currentScene">01</span>
+  <span class="sep">/</span>
+  <span id="totalScenes">09</span>
+</div>
+<div class="space-hint" id="spaceHint">
+  <span>Press</span>
+  <kbd>Space</kbd>
+  <span>to continue</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     SCENE CONTAINER
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="scene-container" id="sceneContainer">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 1: OPENING — "The Void"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s1 active" data-scene="1">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="grid-overlay"></div>
+    <div class="s1-content">
+      <div class="s1-tag">Minecraft Launcher</div>
+      <h1 class="s1-title"><span class="grad">Bonjour</span></h1>
+      <p class="s1-sub">影院级沉浸式体验，重新定义 Minecraft 启动方式</p>
+      <div class="s1-line"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 2: DASHBOARD — "Control"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s2" data-scene="2">
+    <div class="orb orb-3"></div>
+    <div class="deco-line" style="top:20%; left:0; right:0;"></div>
+    <div class="s2-layout">
+      <div class="s2-text">
+        <div class="eyebrow">控制台</div>
+        <h2>一切尽在<br>掌控之中</h2>
+        <p>清晰的信息面板，一目了然的游戏状态。版本选择、账户管理、快速操作——所有功能触手可及。</p>
+        <div class="deco">
+          <span>版本选择</span>
+          <span>账户管理</span>
+          <span>快速操作</span>
+        </div>
+      </div>
+      <div class="s2-img">
+        <img src="dashboard.png" alt="Dashboard">
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 3: ZEN MODE — "Immersion"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s3" data-scene="3">
+    <div class="orb orb-4"></div>
+    <div class="s3-header">
+      <div class="eyebrow">沉浸模式</div>
+      <h2>全屏，全心投入</h2>
+    </div>
+    <div class="s3-img-wrap">
+      <img src="zenmode.png" alt="Zen Mode">
+      <div class="s3-caption">按下 ESC 随时返回控制台</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 4: GAMELIST — "Collection"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s4" data-scene="4">
+    <div class="deco-line-v" style="left:15%; top:0; bottom:0;"></div>
+    <div class="s4-layout">
+      <div class="s2-text">
+        <div class="eyebrow">游戏库</div>
+        <h2>所有版本<br>整齐排列</h2>
+        <p>已安装的版本以精美卡片呈现，每个版本拥有独特的色彩标识。从正式版到快照，从 Forge 到 Fabric。</p>
+        <div class="deco">
+          <span>Forge</span>
+          <span>Fabric</span>
+          <span>快照</span>
+        </div>
+      </div>
+      <div class="s2-img">
+        <img src="Gamelist.png" alt="Game Library">
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 5: MODS — "Possibility"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s5" data-scene="5">
+    <div class="orb orb-1"></div>
+    <div class="s5-header">
+      <div class="eyebrow">模组管理</div>
+      <h2>无限可能</h2>
+      <p>Sodium、Iris、Fabric API……一键浏览、安装、管理你的模组</p>
+    </div>
+    <div class="s5-img">
+      <img src="Mods.png" alt="Mod Management">
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 6: TRANSFORM — "Metamorphosis"
+       The video scene. A moment of transformation.
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s6" data-scene="6">
+    <div class="orb orb-2"></div>
+    <div class="s6-header">
+      <div class="eyebrow">一键切换</div>
+      <h2>两种世界，一念之间</h2>
+    </div>
+    <div class="s6-video-wrap">
+      <video src="%E5%8F%98%E6%8D%A2%E6%BC%94%E7%A4%BA.mov" autoplay loop muted playsinline></video>
+      <div class="s6-caption">从控制台到沉浸模式，无缝切换</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 7: CRAFT — "Philosophy"
+       No image. Just words floating in space.
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s7" data-scene="7">
+    <div class="orb orb-3"></div>
+    <div class="grid-overlay"></div>
+    <div class="s7-quote">
+      "我们不是在做一个启动器。<br>我们在做一种<span class="highlight">仪式感</span>。<br>每一次点击，都是一次冒险的开始。"
+    </div>
+    <div class="s7-attrib">— Bonjour 设计哲学</div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 8: DEV PROGRESS — "The Forge"
+       Development progress dashboard.
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s9" data-scene="8">
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+    <div class="s9-header">
+      <div class="eyebrow">开发进度</div>
+      <h2>锻造日志</h2>
+      <p>实时追踪 Bonjour 的每一次迭代与成长</p>
+    </div>
+    <div class="s9-dashboard">
+      <!-- Stats Overview -->
+      <div class="glass-card">
+        <div class="card-title">项目概览</div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" data-count="420">0</div>
+            <div class="stat-label">Rust 指令</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="40">0</div>
+            <div class="stat-label">React 组件</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="11">0</div>
+            <div class="stat-label">功能页面</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="4">0</div>
+            <div class="stat-label">语言支持</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="2">0</div>
+            <div class="stat-label">平台适配</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="0.0">0</div>
+            <div class="stat-label">当前版本</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bars -->
+      <div class="glass-card">
+        <div class="card-title">核心模块完成度</div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">游戏启动引擎</span>
+            <span class="pct">92%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="92"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">版本管理 & 安装</span>
+            <span class="pct">88%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="88"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">账户系统 (离线/正版/LittleSkin)</span>
+            <span class="pct">85%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="85"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">模组管理 (CurseForge/Modrinth)</span>
+            <span class="pct">78%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="78"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">整合包生态</span>
+            <span class="pct">72%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="72"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">世界管理 & 存档</span>
+            <span class="pct">80%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="80"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">服务器列表 & 联机</span>
+            <span class="pct">65%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="65"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">资源包 & 光影管理</span>
+            <span class="pct">70%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="70"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">游戏内覆盖层 Overlay</span>
+            <span class="pct">60%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="60"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">自动更新 & 增量同步</span>
+            <span class="pct">55%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="55"></div></div>
+        </div>
+      </div>
+
+      <!-- Changelog -->
+      <div class="glass-card">
+        <div class="card-title">更新日志</div>
+        <div class="changelog-list">
+          <div class="changelog-entry">
+            <div class="changelog-dot major"></div>
+            <div class="changelog-content">
+              <div class="changelog-version">v0.0.4 Alpha 01</div>
+              <div class="changelog-date">2026-05-10</div>
+              <div class="changelog-desc">
+                <span class="tag tag-new">新增</span>游戏内覆盖层 Overlay 系统<br>
+                <span class="tag tag-new">新增</span>LittleSkin 外置登录支持<br>
+                <span class="tag tag-new">新增</span>实例快照与回滚功能<br>
+                <span class="tag tag-new">新增</span>JVM 调优向导<br>
+                <span class="tag tag-fix">修复</span>多显示器环境下窗口位置异常
+              </div>
+            </div>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-dot"></div>
+            <div class="changelog-content">
+              <div class="changelog-version">v0.0.3 Alpha</div>
+              <div class="changelog-date">2026-04-15</div>
+              <div class="changelog-desc">
+                <span class="tag tag-new">新增</span>CurseForge / Modrinth 模组浏览器<br>
+                <span class="tag tag-new">新增</span>整合包安装与导出<br>
+                <span class="tag tag-new">新增</span>世界存档健康检查<br>
+                <span class="tag tag-opt">优化</span>启动性能提升 40%
+              </div>
+            </div>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-dot fix"></div>
+            <div class="changelog-content">
+              <div class="changelog-version">v0.0.2 Alpha</div>
+              <div class="changelog-date">2026-03-20</div>
+              <div class="changelog-desc">
+                <span class="tag tag-new">新增</span>多语言支持 (中/英/日/韩)<br>
+                <span class="tag tag-new">新增</span>动态背景与主题编辑器<br>
+                <span class="tag tag-fix">修复</span>macOS 透明窗口渲染问题<br>
+                <span class="tag tag-opt">优化</span>SQLite 数据库迁移
+              </div>
+            </div>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-dot"></div>
+            <div class="changelog-content">
+              <div class="changelog-version">v0.0.1 Alpha</div>
+              <div class="changelog-date">2026-02-01</div>
+              <div class="changelog-desc">
+                <span class="tag tag-new">新增</span>基础启动器框架<br>
+                <span class="tag tag-new">新增</span>离线账户与版本管理<br>
+                <span class="tag tag-new">新增</span>设置系统与全局快捷键<br>
+                <span class="tag tag-new">新增</span>启动日志与崩溃分析
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module Status -->
+      <div class="glass-card">
+        <div class="card-title">模块状态</div>
+        <div class="module-list">
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--life)"><polyline points="20 6 9 17 4 12"/></svg>
+              核心启动流程
+            </span>
+            <span class="module-status status-done">已完成</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--life)"><polyline points="20 6 9 17 4 12"/></svg>
+              版本安装与下载
+            </span>
+            <span class="module-status status-done">已完成</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--life)"><polyline points="20 6 9 17 4 12"/></svg>
+              离线 / 正版登录
+            </span>
+            <span class="module-status status-done">已完成</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--life)"><polyline points="20 6 9 17 4 12"/></svg>
+              多实例管理
+            </span>
+            <span class="module-status status-done">已完成</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#fbbf24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              模组浏览器 & 安装
+            </span>
+            <span class="module-status status-wip">开发中</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#fbbf24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              整合包工坊
+            </span>
+            <span class="module-status status-wip">开发中</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#fbbf24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              服务器联机大厅
+            </span>
+            <span class="module-status status-wip">开发中</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ghost-dim)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              皮肤站同步
+            </span>
+            <span class="module-status status-plan">规划中</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ghost-dim)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              云同步 & 备份
+            </span>
+            <span class="module-status status-plan">规划中</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 9: CLOSING — "The Beginning"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s8" data-scene="9">
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+    <h2>开启你的<br><span class="grad">冒险</span></h2>
+    <p>下载 Bonjour，几分钟内启动你的 Minecraft 世界</p>
+    <div class="s8-actions">
+      <a href="#" class="s8-btn s8-btn-main">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        下载 macOS 版
+      </a>
+      <a href="#" class="s8-btn s8-btn-sec">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        下载 Windows 版
+      </a>
+    </div>
+    <div class="s8-contact">
+      <div class="qq-icon">Q</div>
+      <div class="qq-info">
+        <div class="label">加入 QQ 群</div>
+        <div class="num">1016641691</div>
+      </div>
+    </div>
+    <div class="s8-footer">Bonjour Minecraft Launcher &copy; 2026</div>
+  </section>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════════
+   BONJOUR CINEMATIC ENGINE
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+class CinematicEngine {
+  constructor() {
+    this.scenes = document.querySelectorAll('.scene');
+    this.totalScenes = this.scenes.length;
+    this.currentScene = 0;
+    this.isTransitioning = false;
+    this.transitionDuration = 800;
+
+    this.init();
+  }
+
+  init() {
+    this.buildDots();
+    this.bindEvents();
+    this.updateUI();
+    this.showSpaceHint();
+    this.initCursorTrail();
+    this.initParallax();
+    this.initVideoAutoplay();
+    this.initProgressAnimations();
+  }
+
+  /* ─── Build navigation dots ─── */
+  buildDots() {
+    const container = document.getElementById('sceneDots');
+    for (let i = 0; i < this.totalScenes; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'scene-dot' + (i === 0 ? ' active' : '');
+      dot.addEventListener('click', () => this.goToScene(i));
+      container.appendChild(dot);
+    }
+  }
+
+  /* ─── Bind keyboard and touch events ─── */
+  bindEvents() {
+    // Spacebar / ArrowDown / ArrowRight = next
+    document.addEventListener('keydown', (e) => {
+      if (this.isTransitioning) return;
+
+      if (e.code === 'Space' || e.code === 'ArrowDown' || e.code === 'ArrowRight') {
+        e.preventDefault();
+        this.next();
+      }
+      if (e.code === 'ArrowUp' || e.code === 'ArrowLeft') {
+        e.preventDefault();
+        this.prev();
+      }
+      // Number keys 1-9 jump to scene
+      if (e.key >= '1' && e.key <= '9') {
+        const idx = parseInt(e.key) - 1;
+        if (idx < this.totalScenes) this.goToScene(idx);
+      }
+    });
+
+    // Touch swipe
+    let touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      if (this.isTransitioning) return;
+      const diff = touchStartY - e.changedTouches[0].clientY;
+      if (Math.abs(diff) > 50) {
+        diff > 0 ? this.next() : this.prev();
+      }
+    }, { passive: true });
+
+    // Mouse wheel
+    let wheelTimeout;
+    document.addEventListener('wheel', (e) => {
+      if (this.isTransitioning) return;
+      clearTimeout(wheelTimeout);
+      wheelTimeout = setTimeout(() => {
+        e.deltaY > 0 ? this.next() : this.prev();
+      }, 50);
+    }, { passive: true });
+  }
+
+  /* ─── Video autoplay management ─── */
+  initVideoAutoplay() {
+    // Pause all videos initially
+    document.querySelectorAll('video').forEach(v => v.pause());
+
+    // Play video when scene becomes active
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const scene = mutation.target;
+          const video = scene.querySelector('video');
+          if (video) {
+            if (scene.classList.contains('active')) {
+              video.play().catch(() => {});
+            } else {
+              video.pause();
+            }
+          }
+        }
+      });
+    });
+
+    this.scenes.forEach(scene => {
+      observer.observe(scene, { attributes: true });
+    });
+  }
+
+  /* ─── Progress bar & counter animations ─── */
+  initProgressAnimations() {
+    const animateProgress = (scene) => {
+      if (!scene.classList.contains('s9')) return;
+
+      // Animate progress bars
+      scene.querySelectorAll('.progress-fill').forEach((bar, i) => {
+        bar.style.width = '0%';
+        setTimeout(() => {
+          bar.style.width = bar.dataset.width + '%';
+        }, 600 + i * 80);
+      });
+
+      // Animate stat counters
+      scene.querySelectorAll('.stat-value[data-count]').forEach((el, i) => {
+        const target = parseFloat(el.dataset.count);
+        const isFloat = el.dataset.count.includes('.');
+        const duration = 1200;
+        const start = performance.now();
+        const delay = 400 + i * 100;
+
+        setTimeout(() => {
+          const tick = (now) => {
+            const elapsed = now - start - delay;
+            if (elapsed < 0) {
+              requestAnimationFrame(tick);
+              return;
+            }
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = target * eased;
+            if (isFloat) {
+              el.textContent = current.toFixed(1);
+            } else {
+              el.textContent = Math.round(current);
+            }
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }, delay);
+      });
+    };
+
+    // Trigger when s9 becomes active
+    const s9 = document.querySelector('.s9');
+    if (s9) {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((m) => {
+          if (m.type === 'attributes' && m.attributeName === 'class') {
+            if (s9.classList.contains('active')) {
+              animateProgress(s9);
+            }
+          }
+        });
+      });
+      observer.observe(s9, { attributes: true });
+    }
+  }
+
+  /* ─── Navigate ─── */
+  next() {
+    if (this.currentScene < this.totalScenes - 1) {
+      this.goToScene(this.currentScene + 1);
+    } else {
+      // Loop back to first scene with a flash
+      this.goToScene(0);
+    }
+  }
+
+  prev() {
+    if (this.currentScene > 0) {
+      this.goToScene(this.currentScene - 1);
+    }
+  }
+
+  goToScene(index) {
+    if (this.isTransitioning || index === this.currentScene) return;
+    this.isTransitioning = true;
+
+    const oldScene = this.scenes[this.currentScene];
+    const newScene = this.scenes[index];
+
+    // Flash effect
+    this.triggerFlash();
+
+    // Exit old scene
+    oldScene.classList.remove('active');
+
+    // Small delay for the flash to register
+    setTimeout(() => {
+      // Enter new scene
+      newScene.classList.add('active');
+      this.currentScene = index;
+      this.updateUI();
+
+      // Allow next transition
+      setTimeout(() => {
+        this.isTransitioning = false;
+      }, this.transitionDuration);
+    }, 150);
+  }
+
+  /* ─── Flash transition effect ─── */
+  triggerFlash() {
+    const flash = document.getElementById('flashOverlay');
+    const noise = document.getElementById('noiseBurst');
+
+    flash.classList.add('active');
+    noise.classList.add('active');
+
+    setTimeout(() => {
+      flash.classList.remove('active');
+      noise.classList.remove('active');
+    }, 200);
+  }
+
+  /* ─── Update UI ─── */
+  updateUI() {
+    // Counter
+    document.getElementById('currentScene').textContent =
+      String(this.currentScene + 1).padStart(2, '0');
+
+    // Dots
+    document.querySelectorAll('.scene-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === this.currentScene);
+    });
+
+    // Space hint visibility
+    const hint = document.getElementById('spaceHint');
+    if (this.currentScene === this.totalScenes - 1) {
+      hint.innerHTML = '<span>Press</span><kbd>Space</kbd><span>to restart</span>';
+    } else {
+      hint.innerHTML = '<span>Press</span><kbd>Space</kbd><span>to continue</span>';
+    }
+  }
+
+  /* ─── Show space hint after delay ─── */
+  showSpaceHint() {
+    setTimeout(() => {
+      document.getElementById('spaceHint').classList.add('visible');
+    }, 3000);
+  }
+
+  /* ─── Cursor trail with smooth follow ─── */
+  initCursorTrail() {
+    const trail = document.getElementById('cursorTrail');
+    let mx = 0, my = 0, cx = 0, cy = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      mx = e.clientX;
+      my = e.clientY;
+    }, { passive: true });
+
+    const tick = () => {
+      cx += (mx - cx) * 0.06;
+      cy += (my - cy) * 0.06;
+      trail.style.left = cx + 'px';
+      trail.style.top = cy + 'px';
+      requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  /* ─── Parallax orbs ─── */
+  initParallax() {
+    document.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 2;
+      const y = (e.clientY / window.innerHeight - 0.5) * 2;
+      document.querySelectorAll('.orb').forEach((orb, i) => {
+        const s = (i + 1) * 12;
+        orb.style.transform = `translate(${x * s}px, ${y * s}px)`;
+      });
+    }, { passive: true });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   INITIALIZE
+   ═══════════════════════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  window.cinema = new CinematicEngine();
+});
+</script>
+
+</body>
+</html>
