@@ -72,10 +72,14 @@ html, body {
   padding-bottom:6rem;
 }
 .scene:not(.in-view) {
-  opacity:0.35;
+  opacity:0.6;
 }
 .scene.in-view {
   opacity:1;
+}
+.scene.s10,
+.scene.s9 {
+  opacity:1 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -1138,114 +1142,10 @@ body:hover .cursor-trail { opacity:1; }
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════════════════════
-       SCENE 2: DASHBOARD — "Control"
-       ═══════════════════════════════════════════════════════════════════════════════ -->
-  <section class="scene s2" data-scene="2">
-    <div class="orb orb-3"></div>
-    <div class="deco-line" style="top:20%; left:0; right:0;"></div>
-    <div class="s2-layout">
-      <div class="s2-text">
-        <div class="eyebrow">控制台</div>
-        <h2>一切尽在<br>掌控之中</h2>
-        <p>清晰的信息面板，一目了然的游戏状态。版本选择、账户管理、快速操作——所有功能触手可及。</p>
-        <div class="deco">
-          <span>版本选择</span>
-          <span>账户管理</span>
-          <span>快速操作</span>
-        </div>
-      </div>
-      <div class="s2-img">
-        <img src="dashboard.png" alt="Dashboard">
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════════════
-       SCENE 3: ZEN MODE — "Immersion"
-       ═══════════════════════════════════════════════════════════════════════════════ -->
-  <section class="scene s3" data-scene="3">
-    <div class="orb orb-4"></div>
-    <div class="s3-header">
-      <div class="eyebrow">沉浸模式</div>
-      <h2>全屏，全心投入</h2>
-    </div>
-    <div class="s3-img-wrap">
-      <img src="zenmode.png" alt="Zen Mode">
-      <div class="s3-caption">按下 ESC 随时返回控制台</div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════════════
-       SCENE 4: GAMELIST — "Collection"
-       ═══════════════════════════════════════════════════════════════════════════════ -->
-  <section class="scene s4" data-scene="4">
-    <div class="deco-line-v" style="left:15%; top:0; bottom:0;"></div>
-    <div class="s4-layout">
-      <div class="s2-text">
-        <div class="eyebrow">游戏库</div>
-        <h2>所有版本<br>整齐排列</h2>
-        <p>已安装的版本以精美卡片呈现，每个版本拥有独特的色彩标识。从正式版到快照，从 Forge 到 Fabric。</p>
-        <div class="deco">
-          <span>Forge</span>
-          <span>Fabric</span>
-          <span>快照</span>
-        </div>
-      </div>
-      <div class="s2-img">
-        <img src="Gamelist.png" alt="Game Library">
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════════════
-       SCENE 5: MODS — "Possibility"
-       ═══════════════════════════════════════════════════════════════════════════════ -->
-  <section class="scene s5" data-scene="5">
-    <div class="orb orb-1"></div>
-    <div class="s5-header">
-      <div class="eyebrow">模组管理</div>
-      <h2>无限可能</h2>
-      <p>Sodium、Iris、Fabric API……一键浏览、安装、管理你的模组</p>
-    </div>
-    <div class="s5-img">
-      <img src="Mods.png" alt="Mod Management">
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════════════
-       SCENE 6: TRANSFORM — "Metamorphosis"
-       The video scene. A moment of transformation.
-       ═══════════════════════════════════════════════════════════════════════════════ -->
-  <section class="scene s6" data-scene="6">
-    <div class="orb orb-2"></div>
-    <div class="s6-header">
-      <div class="eyebrow">一键切换</div>
-      <h2>两种世界，一念之间</h2>
-    </div>
-    <div class="s6-video-wrap">
-      <video src="%E5%8F%98%E6%8D%A2%E6%BC%94%E7%A4%BA.mov" autoplay loop muted playsinline></video>
-      <div class="s6-caption">从控制台到沉浸模式，无缝切换</div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════════════
-       SCENE 7: CRAFT — "Philosophy"
-       No image. Just words floating in space.
-       ═══════════════════════════════════════════════════════════════════════════════ -->
-  <section class="scene s7" data-scene="7">
-    <div class="orb orb-3"></div>
-    <div class="grid-overlay"></div>
-    <div class="s7-quote">
-      "我们不是在做一个启动器。<br>我们在做一种<span class="highlight">仪式感</span>。<br>每一次点击，都是一次冒险的开始。"
-    </div>
-    <div class="s7-attrib">— Bonjour 设计哲学</div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════════════
-       SCENE 8.5: TECH AUDIT — "The Diagnosis"
+       SCENE 2: TECH AUDIT — "The Diagnosis"
        Deep technical review report.
        ═══════════════════════════════════════════════════════════════════════════════ -->
-  <section class="scene s10" data-scene="8" id="tech-audit">
+  <section class="scene s10" data-scene="2" id="tech-audit">
     <div class="orb orb-1"></div>
     <div class="s10-header">
       <div class="eyebrow">技术审查</div>
@@ -1429,6 +1329,361 @@ body:hover .cursor-trail { opacity:1; }
         </div>
       </div>
     </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 3: DEV PROGRESS — "The Forge"
+       Development progress dashboard.
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s9" data-scene="3" id="dev-progress">
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+    <div class="s9-header">
+      <div class="eyebrow">开发进度</div>
+      <h2>锻造日志</h2>
+      <p>实时追踪 Bonjour 的每一次迭代与成长</p>
+    </div>
+    <div class="s9-dashboard">
+      <!-- Stats Overview -->
+      <div class="glass-card">
+        <div class="card-title">项目概览</div>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" data-count="420">0</div>
+            <div class="stat-label">Rust 指令</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="40">0</div>
+            <div class="stat-label">React 组件</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="11">0</div>
+            <div class="stat-label">功能页面</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="4">0</div>
+            <div class="stat-label">语言支持</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="2">0</div>
+            <div class="stat-label">平台适配</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" data-count="0.0">0</div>
+            <div class="stat-label">当前版本</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bars -->
+      <div class="glass-card">
+        <div class="card-title">核心模块完成度</div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">游戏启动引擎</span>
+            <span class="pct">92%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="92"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">版本管理 & 安装</span>
+            <span class="pct">88%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="88"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">账户系统 (离线/正版/LittleSkin)</span>
+            <span class="pct">85%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="85"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">模组管理 (CurseForge/Modrinth)</span>
+            <span class="pct">78%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="78"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">整合包生态</span>
+            <span class="pct">72%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="72"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">世界管理 & 存档</span>
+            <span class="pct">80%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="80"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">服务器列表 & 联机</span>
+            <span class="pct">65%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="65"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">资源包 & 光影管理</span>
+            <span class="pct">70%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="70"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">游戏内覆盖层 Overlay</span>
+            <span class="pct">60%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="60"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="progress-label">
+            <span class="name">自动更新 & 增量同步</span>
+            <span class="pct">55%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" data-width="55"></div></div>
+        </div>
+      </div>
+
+      <!-- Changelog -->
+      <div class="glass-card">
+        <div class="card-title">更新日志</div>
+        <div class="changelog-list">
+          <div class="changelog-entry">
+            <div class="changelog-dot major"></div>
+            <div class="changelog-content">
+              <div class="changelog-version">v0.0.4 Alpha 01</div>
+              <div class="changelog-date">2026-05-10</div>
+              <div class="changelog-desc">
+                <span class="tag tag-new">新增</span>游戏内覆盖层 Overlay 系统<br>
+                <span class="tag tag-new">新增</span>LittleSkin 外置登录支持<br>
+                <span class="tag tag-new">新增</span>实例快照与回滚功能<br>
+                <span class="tag tag-new">新增</span>JVM 调优向导<br>
+                <span class="tag tag-fix">修复</span>多显示器环境下窗口位置异常
+              </div>
+            </div>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-dot"></div>
+            <div class="changelog-content">
+              <div class="changelog-version">v0.0.3 Alpha</div>
+              <div class="changelog-date">2026-04-15</div>
+              <div class="changelog-desc">
+                <span class="tag tag-new">新增</span>CurseForge / Modrinth 模组浏览器<br>
+                <span class="tag tag-new">新增</span>整合包安装与导出<br>
+                <span class="tag tag-new">新增</span>世界存档健康检查<br>
+                <span class="tag tag-opt">优化</span>启动性能提升 40%
+              </div>
+            </div>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-dot fix"></div>
+            <div class="changelog-content">
+              <div class="changelog-version">v0.0.2 Alpha</div>
+              <div class="changelog-date">2026-03-20</div>
+              <div class="changelog-desc">
+                <span class="tag tag-new">新增</span>多语言支持 (中/英/日/韩)<br>
+                <span class="tag tag-new">新增</span>动态背景与主题编辑器<br>
+                <span class="tag tag-fix">修复</span>macOS 透明窗口渲染问题<br>
+                <span class="tag tag-opt">优化</span>SQLite 数据库迁移
+              </div>
+            </div>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-dot"></div>
+            <div class="changelog-content">
+              <div class="changelog-version">v0.0.1 Alpha</div>
+              <div class="changelog-date">2026-02-01</div>
+              <div class="changelog-desc">
+                <span class="tag tag-new">新增</span>基础启动器框架<br>
+                <span class="tag tag-new">新增</span>离线账户与版本管理<br>
+                <span class="tag tag-new">新增</span>设置系统与全局快捷键<br>
+                <span class="tag tag-new">新增</span>启动日志与崩溃分析
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module Status -->
+      <div class="glass-card">
+        <div class="card-title">模块状态</div>
+        <div class="module-list">
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--life)"><polyline points="20 6 9 17 4 12"/></svg>
+              核心启动流程
+            </span>
+            <span class="module-status status-done">已完成</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--life)"><polyline points="20 6 9 17 4 12"/></svg>
+              版本安装与下载
+            </span>
+            <span class="module-status status-done">已完成</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--life)"><polyline points="20 6 9 17 4 12"/></svg>
+              离线 / 正版登录
+            </span>
+            <span class="module-status status-done">已完成</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--life)"><polyline points="20 6 9 17 4 12"/></svg>
+              多实例管理
+            </span>
+            <span class="module-status status-done">已完成</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#fbbf24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              模组浏览器 & 安装
+            </span>
+            <span class="module-status status-wip">开发中</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#fbbf24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              整合包工坊
+            </span>
+            <span class="module-status status-wip">开发中</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#fbbf24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              服务器联机大厅
+            </span>
+            <span class="module-status status-wip">开发中</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ghost-dim)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              皮肤站同步
+            </span>
+            <span class="module-status status-plan">规划中</span>
+          </div>
+          <div class="module-item">
+            <span class="module-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ghost-dim)"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              云同步 & 备份
+            </span>
+            <span class="module-status status-plan">规划中</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 4: DASHBOARD — "Control"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s2" data-scene="4">
+    <div class="orb orb-3"></div>
+    <div class="deco-line" style="top:20%; left:0; right:0;"></div>
+    <div class="s2-layout">
+      <div class="s2-text">
+        <div class="eyebrow">控制台</div>
+        <h2>一切尽在<br>掌控之中</h2>
+        <p>清晰的信息面板，一目了然的游戏状态。版本选择、账户管理、快速操作——所有功能触手可及。</p>
+        <div class="deco">
+          <span>版本选择</span>
+          <span>账户管理</span>
+          <span>快速操作</span>
+        </div>
+      </div>
+      <div class="s2-img">
+        <img src="dashboard.png" alt="Dashboard">
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 3: ZEN MODE — "Immersion"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s3" data-scene="3">
+    <div class="orb orb-4"></div>
+    <div class="s3-header">
+      <div class="eyebrow">沉浸模式</div>
+      <h2>全屏，全心投入</h2>
+    </div>
+    <div class="s3-img-wrap">
+      <img src="zenmode.png" alt="Zen Mode">
+      <div class="s3-caption">按下 ESC 随时返回控制台</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 4: GAMELIST — "Collection"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s4" data-scene="4">
+    <div class="deco-line-v" style="left:15%; top:0; bottom:0;"></div>
+    <div class="s4-layout">
+      <div class="s2-text">
+        <div class="eyebrow">游戏库</div>
+        <h2>所有版本<br>整齐排列</h2>
+        <p>已安装的版本以精美卡片呈现，每个版本拥有独特的色彩标识。从正式版到快照，从 Forge 到 Fabric。</p>
+        <div class="deco">
+          <span>Forge</span>
+          <span>Fabric</span>
+          <span>快照</span>
+        </div>
+      </div>
+      <div class="s2-img">
+        <img src="Gamelist.png" alt="Game Library">
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 5: MODS — "Possibility"
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s5" data-scene="5">
+    <div class="orb orb-1"></div>
+    <div class="s5-header">
+      <div class="eyebrow">模组管理</div>
+      <h2>无限可能</h2>
+      <p>Sodium、Iris、Fabric API……一键浏览、安装、管理你的模组</p>
+    </div>
+    <div class="s5-img">
+      <img src="Mods.png" alt="Mod Management">
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 6: TRANSFORM — "Metamorphosis"
+       The video scene. A moment of transformation.
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s6" data-scene="6">
+    <div class="orb orb-2"></div>
+    <div class="s6-header">
+      <div class="eyebrow">一键切换</div>
+      <h2>两种世界，一念之间</h2>
+    </div>
+    <div class="s6-video-wrap">
+      <video src="%E5%8F%98%E6%8D%A2%E6%BC%94%E7%A4%BA.mov" autoplay loop muted playsinline></video>
+      <div class="s6-caption">从控制台到沉浸模式，无缝切换</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════
+       SCENE 7: CRAFT — "Philosophy"
+       No image. Just words floating in space.
+       ═══════════════════════════════════════════════════════════════════════════════ -->
+  <section class="scene s7" data-scene="7">
+    <div class="orb orb-3"></div>
+    <div class="grid-overlay"></div>
+    <div class="s7-quote">
+      "我们不是在做一个启动器。<br>我们在做一种<span class="highlight">仪式感</span>。<br>每一次点击，都是一次冒险的开始。"
+    </div>
+    <div class="s7-attrib">— Bonjour 设计哲学</div>
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════════════════════
